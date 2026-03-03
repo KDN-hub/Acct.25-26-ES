@@ -28,12 +28,15 @@ export async function loginWithMatric(
     // Look up the voter by matric number
     const { data: voter, error } = await supabase
         .from("voters")
-        .select("matric_number, has_voted, name")
+        .select("*")
         .eq("matric_number", matricNumber)
         .single();
 
+    console.log("Supabase query result:", { voter, error, matricNumber });
+
     if (error || !voter) {
-        return { error: "Matric number not found. You are not eligible to vote." };
+        const debugMsg = error ? ` (${error.code}: ${error.message})` : "";
+        return { error: `Matric number not found.${debugMsg}` };
     }
 
     if (voter.has_voted) {
