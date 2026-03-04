@@ -1,5 +1,3 @@
-import { logoutAdmin } from "@/app/actions/admin-auth";
-
 export default function AdminLayout({
     children,
 }: {
@@ -20,23 +18,6 @@ export default function AdminLayout({
                         backgroundSize: "60px 60px",
                     }}
                 />
-            </div>
-
-            {/* Logout button header */}
-            <div className="absolute right-4 top-4 z-50 sm:right-8 sm:top-8">
-                <form action={logoutAdmin}>
-                    <button
-                        type="submit"
-                        className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-medium text-white/60 backdrop-blur-md transition-all hover:bg-white/[0.08] hover:text-white"
-                    >
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
-                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                            <polyline points="16 17 21 12 16 7" />
-                            <line x1="21" x2="9" y1="12" y2="12" />
-                        </svg>
-                        Logout
-                    </button>
-                </form>
             </div>
 
             {children}

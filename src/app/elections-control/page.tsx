@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { logoutAdmin } from "@/app/actions/admin-auth";
 
 interface CandidateResult {
     id: string;
@@ -66,13 +67,30 @@ export default async function AdminPage() {
     return (
         <main className="min-h-screen p-4 sm:p-6 lg:p-8">
             {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-white sm:text-4xl">
-                    Election <span className="text-[#d4a843]">Results</span>
-                </h1>
-                <p className="mt-1.5 text-sm text-white/40">
-                    Live results for the Accounting Department election
-                </p>
+            <div className="mb-8 flex items-start justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold text-white sm:text-4xl">
+                        Election <span className="text-[#d4a843]">Results</span>
+                    </h1>
+                    <p className="mt-1.5 text-sm text-white/40">
+                        Live results for the Accounting Department election
+                    </p>
+                </div>
+
+                {/* Logout button */}
+                <form action={logoutAdmin}>
+                    <button
+                        type="submit"
+                        className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-medium text-white/60 backdrop-blur-md transition-all hover:bg-white/[0.08] hover:text-white sm:px-4"
+                    >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                            <polyline points="16 17 21 12 16 7" />
+                            <line x1="21" x2="9" y1="12" y2="12" />
+                        </svg>
+                        <span className="hidden sm:inline">Logout</span>
+                    </button>
+                </form>
             </div>
 
             {/* Stats bar */}
@@ -122,8 +140,8 @@ export default async function AdminPage() {
                                                     {/* Candidate avatar */}
                                                     <div
                                                         className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${isLeading
-                                                                ? "bg-[#d4a843]/20 text-[#d4a843]"
-                                                                : "bg-white/10 text-white/50"
+                                                            ? "bg-[#d4a843]/20 text-[#d4a843]"
+                                                            : "bg-white/10 text-white/50"
                                                             }`}
                                                     >
                                                         {candidate.name
@@ -149,8 +167,8 @@ export default async function AdminPage() {
                                             <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
                                                 <div
                                                     className={`h-full rounded-full transition-all duration-1000 ease-out ${isLeading
-                                                            ? "bg-gradient-to-r from-[#d4a843] to-[#e0b84e]"
-                                                            : "bg-white/15"
+                                                        ? "bg-gradient-to-r from-[#d4a843] to-[#e0b84e]"
+                                                        : "bg-white/15"
                                                         }`}
                                                     style={{
                                                         width: `${(candidate.vote_count / maxVotes) * 100}%`,
