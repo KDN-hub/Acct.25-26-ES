@@ -1,4 +1,7 @@
-import Link from "next/link";
+"use client";
+
+import { logout } from "@/app/actions/logout";
+import { Button } from "@/components/ui/button";
 
 export default function VoteSuccessPage() {
     return (
@@ -41,12 +44,14 @@ export default function VoteSuccessPage() {
                     </p>
                 </div>
 
-                <Link
-                    href="/"
-                    className="mt-2 inline-flex h-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] px-8 text-sm font-medium text-white/70 transition-colors hover:bg-white/[0.08] hover:text-white"
-                >
-                    Return to Home
-                </Link>
+                <form action={logout}>
+                    <Button
+                        type="submit"
+                        className="mt-2 h-11 rounded-xl bg-gradient-to-r from-[#d4a843] to-[#c49535] px-8 font-semibold text-[#0a1628] shadow-lg shadow-[#d4a843]/20 hover:from-[#e0b84e] hover:to-[#d4a843]"
+                    >
+                        Logout
+                    </Button>
+                </form>
             </div>
         </div>
     );

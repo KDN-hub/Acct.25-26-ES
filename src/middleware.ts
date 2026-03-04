@@ -2,6 +2,17 @@ import { type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
 export async function middleware(request: NextRequest) {
+    const { pathname } = request.nextUrl;
+
+    // Protect /elections-control routes (except /elections-control/login)
+    if (pathname.startsWith("/elections-control") && !pathname.startsWith("/elections-control/login")) {
+        const adminToken = request.cookies.get("admin_token");
+        if (!adminToken) {
+            return Response.redirect(new URL("/elections-control/login", request.url));
+        }
+    }
+
+    // Process Supabase Auth for other routes like /vote
     return await updateSession(request);
 }
 

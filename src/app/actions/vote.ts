@@ -17,7 +17,7 @@ export async function submitVotes(
     const matricNumber = cookieStore.get("matric_number")?.value;
 
     if (!matricNumber) {
-        redirect("/");
+        redirect("/login");
     }
 
     const supabase = await createClient();
@@ -30,7 +30,7 @@ export async function submitVotes(
         .single();
 
     if (!voter) {
-        redirect("/");
+        redirect("/login");
     }
 
     if (voter.has_voted) {
@@ -47,19 +47,22 @@ export async function submitVotes(
         return { error: "No positions available for voting." };
     }
 
-    // Collect votes from form data
+    // Collect votes from form data (positions are optional)
     const votesToInsert: { voter_matric: string; position_id: string; candidate_id: string }[] = [];
 
     for (const position of positions) {
         const candidateId = formData.get(`position_${position.id}`)?.toString();
-        if (!candidateId) {
-            return { error: "Please select a candidate for every position." };
+        if (candidateId) {
+            votesToInsert.push({
+                voter_matric: matricNumber,
+                position_id: position.id,
+                candidate_id: candidateId,
+            });
         }
-        votesToInsert.push({
-            voter_matric: matricNumber,
-            position_id: position.id,
-            candidate_id: candidateId,
-        });
+    }
+
+    if (votesToInsert.length === 0) {
+        return { error: "Please select at least one candidate before submitting." };
     }
 
     // Insert all votes

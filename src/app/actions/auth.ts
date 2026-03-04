@@ -30,13 +30,16 @@ export async function loginWithMatric(
         .from("voters")
         .select("*")
         .eq("matric_number", matricNumber)
-        .single();
+        .maybeSingle();
 
     console.log("Supabase query result:", { voter, error, matricNumber });
 
-    if (error || !voter) {
-        const debugMsg = error ? ` (${error.code}: ${error.message})` : "";
-        return { error: `Matric number not found.${debugMsg}` };
+    if (error) {
+        return { error: `Database error: ${error.message}` };
+    }
+
+    if (!voter) {
+        return { error: "Matric number not found. Ensure you are registered." };
     }
 
     if (voter.has_voted) {

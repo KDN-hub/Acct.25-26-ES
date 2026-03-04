@@ -57,9 +57,11 @@ INSERT INTO positions (name, display_order) VALUES
   ('President', 1),
   ('Vice President', 2),
   ('General Secretary', 3),
-  ('Financial Secretary', 4),
-  ('Treasurer', 5),
-  ('Public Relations Officer', 6);
+  ('Treasurer', 4),
+  ('Welfare Director', 5),
+  ('Chaplain', 6),
+  ('PRO', 7),
+  ('Social Director', 8);
 
 -- Get position IDs and insert candidates
 DO $$
@@ -67,16 +69,20 @@ DECLARE
   pos_president UUID;
   pos_vp UUID;
   pos_secretary UUID;
-  pos_finsec UUID;
   pos_treasurer UUID;
+  pos_welfare UUID;
+  pos_chaplain UUID;
   pos_pro UUID;
+  pos_social UUID;
 BEGIN
   SELECT id INTO pos_president FROM positions WHERE name = 'President';
   SELECT id INTO pos_vp FROM positions WHERE name = 'Vice President';
   SELECT id INTO pos_secretary FROM positions WHERE name = 'General Secretary';
-  SELECT id INTO pos_finsec FROM positions WHERE name = 'Financial Secretary';
   SELECT id INTO pos_treasurer FROM positions WHERE name = 'Treasurer';
-  SELECT id INTO pos_pro FROM positions WHERE name = 'Public Relations Officer';
+  SELECT id INTO pos_welfare FROM positions WHERE name = 'Welfare Director';
+  SELECT id INTO pos_chaplain FROM positions WHERE name = 'Chaplain';
+  SELECT id INTO pos_pro FROM positions WHERE name = 'PRO';
+  SELECT id INTO pos_social FROM positions WHERE name = 'Social Director';
 
   INSERT INTO candidates (position_id, name) VALUES
     -- President
@@ -88,13 +94,19 @@ BEGIN
     -- General Secretary
     (pos_secretary, 'Candidate E'),
     (pos_secretary, 'Candidate F'),
-    -- Financial Secretary
-    (pos_finsec, 'Candidate G'),
-    (pos_finsec, 'Candidate H'),
     -- Treasurer
-    (pos_treasurer, 'Candidate I'),
-    (pos_treasurer, 'Candidate J'),
+    (pos_treasurer, 'Candidate G'),
+    (pos_treasurer, 'Candidate H'),
+    -- Welfare Director
+    (pos_welfare, 'Candidate I'),
+    (pos_welfare, 'Candidate J'),
+    -- Chaplain
+    (pos_chaplain, 'Candidate K'),
+    (pos_chaplain, 'Candidate L'),
     -- PRO
-    (pos_pro, 'Candidate K'),
-    (pos_pro, 'Candidate L');
+    (pos_pro, 'Candidate M'),
+    (pos_pro, 'Candidate N'),
+    -- Social Director
+    (pos_social, 'Candidate O'),
+    (pos_social, 'Candidate P');
 END $$;
