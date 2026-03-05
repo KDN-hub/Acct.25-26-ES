@@ -39,11 +39,22 @@ export async function loginWithMatric(
     }
 
     if (!voter) {
-        return { error: "Matric number not found. Ensure you are registered." };
+        return { error: "Incorrect matric number" };
     }
 
     if (voter.has_voted) {
         return { error: "You have already voted." };
+    }
+
+    // Update the voter's name in the database
+    const { error: updateError } = await supabase
+        .from("voters")
+        .update({ full_name: name })
+        .eq("matric_number", matricNumber);
+
+    if (updateError) {
+        console.error("Failed to update voter name:", updateError);
+        return { error: "An error occurred while linking your name." };
     }
 
     // Set secure HTTP-only cookies
