@@ -395,9 +395,21 @@ export function VoteDashboard({
                                         <span className="flex items-center gap-2 text-white/50">
                                             {position.name}
                                         </span>
-                                        <span className={`font-medium ${skipped ? "text-white/30 italic" : "text-[#d4a843]"}`}>
-                                            {skipped ? "Skipped" : candidate?.name}
-                                        </span>
+                                        <div className="flex items-center gap-2">
+                                            <span className={`font-medium ${skipped ? "text-white/30 italic" : "text-[#d4a843]"}`}>
+                                                {skipped ? "Skipped" : candidate?.name}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setShowConfirm(false);
+                                                    setActivePositionIndex(index);
+                                                }}
+                                                className="rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white/30 transition-colors hover:bg-white/[0.06] hover:text-white/60"
+                                            >
+                                                Edit
+                                            </button>
+                                        </div>
                                     </div>
                                 );
                             })}
