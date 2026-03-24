@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AD E-Voting — Accounting Department Electoral System",
+  title: "ALBU E-Voting — Accounting Students League of Babcock University Electoral System",
   description: "Official electronic voting system for the Accounting Department elections",
 };
 

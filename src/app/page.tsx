@@ -47,11 +47,11 @@ export default function SplashPage() {
         <div>
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
             <span className="bg-gradient-to-r from-[#d4a843] to-[#e0b84e] bg-clip-text text-transparent">
-              AD E-Voting
+              ALBU E-Voting
             </span>
           </h1>
           <p className="mt-3 text-base font-medium tracking-wide text-white/60 sm:text-lg">
-            Accounting Department Electoral System
+            Accounting Students League of Babcock University Electoral System
           </p>
         </div>
 
