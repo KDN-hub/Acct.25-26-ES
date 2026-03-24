@@ -61,11 +61,8 @@ export default function LoginPage() {
 
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                            ALBU <span className="text-[#d4a843]">E-Voting</span>
+                            ALBU <span className="text-[#d4a843]">Elections 2026</span>
                         </h1>
-                        <p className="mt-1.5 text-sm font-medium tracking-wide text-white/50">
-                            Accounting Students League of Babcock University Electoral System
-                        </p>
                     </div>
                 </div>
 
