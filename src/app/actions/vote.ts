@@ -12,6 +12,11 @@ export interface VoteState {
 // Election closes at 4:00 PM WAT (UTC+1) on Sunday, March 29, 2026
 const ELECTION_DEADLINE = new Date("2026-03-29T16:00:00+01:00");
 
+// 60-minute grace period for voters who were mid-session at 4pm (hard cutoff at 5pm)
+const SUBMISSION_GRACE_MS = 60 * 60 * 1000;
+const SUBMISSION_HARD_DEADLINE = new Date(ELECTION_DEADLINE.getTime() + SUBMISSION_GRACE_MS);
+
+// Used by page.tsx to block NEW visitors after 4pm
 export function isElectionClosed(): boolean {
     return new Date() >= ELECTION_DEADLINE;
 }
@@ -20,8 +25,8 @@ export async function submitVotes(
     _prevState: VoteState,
     formData: FormData
 ): Promise<VoteState> {
-    // Check if election has closed
-    if (isElectionClosed()) {
+    // Hard deadline: no submissions at all after 4:30 PM (grace period for mid-session voters)
+    if (new Date() >= SUBMISSION_HARD_DEADLINE) {
         return { error: "Voting has ended. The election portal closed at 4:00 PM on Sunday, March 29." };
     }
 

@@ -5,7 +5,6 @@ import { VoteDashboard } from "./vote-dashboard";
 import { isElectionClosed } from "@/app/actions/vote";
 
 // Election deadline: Sunday, March 29, 2026 at 4:00 PM WAT
-const ELECTION_DEADLINE_MS = new Date("2026-03-29T16:00:00+01:00").getTime();
 
 export default async function VotePage() {
   // Check if election is closed
@@ -90,7 +89,6 @@ export default async function VotePage() {
     <VoteDashboard
       voterName={voterName}
       positions={positions || []}
-      electionDeadlineMs={ELECTION_DEADLINE_MS}
     />
   );
 }
