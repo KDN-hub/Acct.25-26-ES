@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useActionState } from "react";
+import { useState, useEffect, useActionState } from "react";
 import { submitVotes, type VoteState } from "@/app/actions/vote";
 import { Button } from "@/components/ui/button";
 
@@ -22,9 +22,11 @@ const initialState: VoteState = {};
 export function VoteDashboard({
     voterName,
     positions,
+    electionDeadlineMs,
 }: {
     voterName: string;
     positions: Position[];
+    electionDeadlineMs: number;
 }) {
     const [activePositionIndex, setActivePositionIndex] = useState(0);
     const [selections, setSelections] = useState<Record<string, string>>({});
@@ -33,6 +35,19 @@ export function VoteDashboard({
         submitVotes,
         initialState
     );
+    const [isClosed, setIsClosed] = useState(() => Date.now() >= electionDeadlineMs);
+
+    // Auto-close when deadline is reached
+    useEffect(() => {
+        if (isClosed) return;
+        const remaining = electionDeadlineMs - Date.now();
+        if (remaining <= 0) {
+            setIsClosed(true);
+            return;
+        }
+        const timer = setTimeout(() => setIsClosed(true), remaining);
+        return () => clearTimeout(timer);
+    }, [electionDeadlineMs, isClosed]);
 
     const activePosition = positions[activePositionIndex];
     const totalPositions = positions.length;
@@ -320,13 +335,14 @@ export function VoteDashboard({
                                     <Button
                                         type="button"
                                         onClick={() => setShowConfirm(true)}
-                                        className="h-11 rounded-xl bg-gradient-to-r from-[#d4a843] to-[#c49535] font-semibold text-[#0a1628] shadow-lg shadow-[#d4a843]/25 hover:from-[#e0b84e] hover:to-[#d4a843] hover:shadow-xl hover:shadow-[#d4a843]/30 active:scale-[0.98] transition-all"
+                                        disabled={isClosed}
+                                        className="h-11 rounded-xl bg-gradient-to-r from-[#d4a843] to-[#c49535] font-semibold text-[#0a1628] shadow-lg shadow-[#d4a843]/25 hover:from-[#e0b84e] hover:to-[#d4a843] hover:shadow-xl hover:shadow-[#d4a843]/30 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-1.5 h-4 w-4">
                                             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
                                             <polyline points="22 4 12 14.01 9 11.01" />
                                         </svg>
-                                        Submit Ballot
+                                        {isClosed ? "Voting Ended" : "Submit Ballot"}
                                     </Button>
                                 ) : (
                                     <span className="rounded-lg bg-white/[0.04] px-3 py-2 text-xs text-white/30">
@@ -442,8 +458,8 @@ export function VoteDashboard({
                                 )}
                                 <Button
                                     type="submit"
-                                    disabled={isPending}
-                                    className="h-11 w-full rounded-xl bg-gradient-to-r from-[#d4a843] to-[#c49535] font-semibold text-[#0a1628] shadow-lg shadow-[#d4a843]/25 hover:from-[#e0b84e] hover:to-[#d4a843] active:scale-[0.98] transition-all"
+                                    disabled={isPending || isClosed}
+                                    className="h-11 w-full rounded-xl bg-gradient-to-r from-[#d4a843] to-[#c49535] font-semibold text-[#0a1628] shadow-lg shadow-[#d4a843]/25 hover:from-[#e0b84e] hover:to-[#d4a843] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {isPending ? (
                                         <span className="flex items-center gap-2">

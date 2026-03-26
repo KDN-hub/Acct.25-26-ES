@@ -9,10 +9,22 @@ export interface VoteState {
     success?: boolean;
 }
 
+// Election closes at 4:00 PM WAT (UTC+1) on Sunday, March 29, 2026
+const ELECTION_DEADLINE = new Date("2026-03-29T16:00:00+01:00");
+
+export function isElectionClosed(): boolean {
+    return new Date() >= ELECTION_DEADLINE;
+}
+
 export async function submitVotes(
     _prevState: VoteState,
     formData: FormData
 ): Promise<VoteState> {
+    // Check if election has closed
+    if (isElectionClosed()) {
+        return { error: "Voting has ended. The election portal closed at 4:00 PM on Sunday, March 29." };
+    }
+
     const cookieStore = await cookies();
     const matricNumber = cookieStore.get("matric_number")?.value;
 
