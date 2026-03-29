@@ -8,7 +8,7 @@ import { isElectionClosed } from "@/app/actions/vote";
 
 export default async function VotePage() {
   // Check if election is closed
-  const electionClosed = isElectionClosed();
+  const electionClosed = await isElectionClosed();
 
   if (electionClosed) {
     return (
