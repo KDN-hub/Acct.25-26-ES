@@ -21,8 +21,26 @@ export async function GET() {
         `)
         .order("display_order");
 
-    // Fetch all votes
-    const { data: votes } = await supabase.from("votes").select("position_id, candidate_id");
+    // Fetch ALL votes — Supabase defaults to 1000 rows, so we paginate
+    let allVotes: { position_id: string; candidate_id: string }[] = [];
+    let from = 0;
+    const pageSize = 1000;
+    let hasMore = true;
+
+    while (hasMore) {
+        const { data: votePage } = await supabase
+            .from("votes")
+            .select("position_id, candidate_id")
+            .range(from, from + pageSize - 1);
+
+        if (votePage && votePage.length > 0) {
+            allVotes = allVotes.concat(votePage);
+            from += pageSize;
+            hasMore = votePage.length === pageSize;
+        } else {
+            hasMore = false;
+        }
+    }
 
     // Fetch voter stats
     const { count: totalVoters } = await supabase
@@ -43,7 +61,7 @@ export async function GET() {
 
     // Build results
     const results = (positions || []).map((position) => {
-        const positionVotes = (votes || []).filter((v) => v.position_id === position.id);
+        const positionVotes = allVotes.filter((v) => v.position_id === position.id);
         const candidateResults = (position.candidates as { id: string; name: string; image_url: string | null }[]).map((candidate) => ({
             ...candidate,
             vote_count: positionVotes.filter((v) => v.candidate_id === candidate.id).length,
@@ -65,6 +83,7 @@ export async function GET() {
         votedCount: vc,
         participation: tv ? Math.round((vc / tv) * 100) : 0,
         electionStatus: settingsRow?.status || "Ongoing",
+        totalVoteRecords: allVotes.length,
     }, {
         headers: {
             "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
