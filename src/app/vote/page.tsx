@@ -35,7 +35,7 @@ export default async function VotePage() {
             </h1>
 
             <p className="text-white/50 text-sm leading-relaxed mb-6">
-              The election portal closed at <span className="font-semibold text-white/70">4:00 PM on Sunday, March 29, 2026</span>.
+              The election portal has been officially closed by the electoral committee.
               <br />
               Thank you for your participation in the ALBU Elections 2026.
             </p>

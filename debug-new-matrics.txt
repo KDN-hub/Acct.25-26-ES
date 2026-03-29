@@ -1,0 +1,18 @@
+[
+  {
+    "matric_number": "20/1556",
+    "has_voted": false
+  },
+  {
+    "matric_number": "22/1765",
+    "has_voted": true
+  },
+  {
+    "matric_number": "24/0471",
+    "has_voted": false
+  },
+  {
+    "matric_number": "25/1359",
+    "has_voted": true
+  }
+]
