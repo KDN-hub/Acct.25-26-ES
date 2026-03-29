@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useCallback } from "react";
+import { createClient } from "@/lib/supabase/client";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -21,33 +21,94 @@ interface PositionResult {
 }
 
 interface AdminDashboardClientProps {
-    results: PositionResult[];
-    totalVoters: number;
-    votedCount: number;
-    participation: number;
-    electionStatus: string;
     logoutAction: () => Promise<void>;
 }
 
 export default function AdminDashboardClient({
-    results,
-    totalVoters,
-    votedCount,
-    participation,
-    electionStatus,
     logoutAction,
 }: AdminDashboardClientProps) {
+    const [results, setResults] = useState<PositionResult[]>([]);
+    const [totalVoters, setTotalVoters] = useState(0);
+    const [votedCount, setVotedCount] = useState(0);
+    const [participation, setParticipation] = useState(0);
+    const [electionStatus, setElectionStatus] = useState("Ongoing");
     const [isGenerating, setIsGenerating] = useState(false);
-    const isElectionEnded = electionStatus === "Ended";
-    const router = useRouter();
+    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Auto-refresh every 15 seconds for live vote counts
+    const isElectionEnded = electionStatus === "Ended";
+
+    const fetchData = useCallback(async () => {
+        const supabase = createClient();
+
+        // Fetch positions with candidates
+        const { data: positions } = await supabase
+            .from("positions")
+            .select(`
+                id,
+                name,
+                display_order,
+                candidates (
+                    id,
+                    name,
+                    image_url
+                )
+            `)
+            .order("display_order");
+
+        // Fetch all votes
+        const { data: votes } = await supabase.from("votes").select("position_id, candidate_id");
+
+        // Fetch voter stats
+        const { count: totalVotersCount } = await supabase
+            .from("voters")
+            .select("*", { count: "exact", head: true });
+
+        const { count: votedCountResult } = await supabase
+            .from("voters")
+            .select("*", { count: "exact", head: true })
+            .eq("has_voted", true);
+
+        // Fetch election status
+        const { data: settingsRow } = await supabase
+            .from("election_settings")
+            .select("status")
+            .limit(1)
+            .single();
+
+        // Build results
+        const builtResults: PositionResult[] = (positions || []).map((position) => {
+            const positionVotes = (votes || []).filter((v) => v.position_id === position.id);
+            const candidateResults: CandidateResult[] = (position.candidates as { id: string; name: string; image_url: string | null }[]).map((candidate) => ({
+                ...candidate,
+                vote_count: positionVotes.filter((v) => v.candidate_id === candidate.id).length,
+            }));
+            candidateResults.sort((a, b) => b.vote_count - a.vote_count);
+            return {
+                ...position,
+                candidates: candidateResults,
+                totalVotes: positionVotes.length,
+            };
+        });
+
+        const tv = totalVotersCount || 0;
+        const vc = votedCountResult || 0;
+
+        setResults(builtResults);
+        setTotalVoters(tv);
+        setVotedCount(vc);
+        setParticipation(tv ? Math.round((vc / tv) * 100) : 0);
+        setElectionStatus(settingsRow?.status || "Ongoing");
+        setLastUpdated(new Date());
+        setIsLoading(false);
+    }, []);
+
+    // Fetch on mount + auto-refresh every 10 seconds
     useEffect(() => {
-        const interval = setInterval(() => {
-            router.refresh();
-        }, 15000);
+        fetchData();
+        const interval = setInterval(fetchData, 10000);
         return () => clearInterval(interval);
-    }, [router]);
+    }, [fetchData]);
 
     function generatePDF() {
         setIsGenerating(true);
@@ -89,23 +150,19 @@ export default function AdminDashboardClient({
 
             // ─── Results per office ───
             results.forEach((position) => {
-                // Check if we need a new page (leave room for header + at least 2 rows)
                 if (yPos > doc.internal.pageSize.getHeight() - 50) {
                     doc.addPage();
                     yPos = 20;
                 }
 
-                // Office title
                 doc.setFontSize(13);
                 doc.setFont("helvetica", "bold");
                 doc.setTextColor(15, 31, 61);
                 doc.text(position.name, 14, yPos);
                 yPos += 2;
 
-                // Find the winner (highest vote_count)
                 const maxVoteCount = Math.max(...position.candidates.map((c) => c.vote_count));
 
-                // Table
                 autoTable(doc, {
                     startY: yPos,
                     head: [["Candidate Name", "Votes Received"]],
@@ -128,7 +185,6 @@ export default function AdminDashboardClient({
                         fillColor: [248, 250, 255],
                     },
                     didParseCell: (data) => {
-                        // Highlight the winner row
                         if (data.section === "body") {
                             const candidateIndex = data.row.index;
                             const candidate = position.candidates[candidateIndex];
@@ -137,7 +193,7 @@ export default function AdminDashboardClient({
                                 candidate.vote_count === maxVoteCount &&
                                 candidate.vote_count > 0
                             ) {
-                                data.cell.styles.fillColor = [255, 248, 225]; // light gold #FFF8E1
+                                data.cell.styles.fillColor = [255, 248, 225];
                                 data.cell.styles.fontStyle = "bold";
                                 data.cell.styles.textColor = [15, 31, 61];
                             }
@@ -150,7 +206,6 @@ export default function AdminDashboardClient({
                     },
                 });
 
-                // Get the Y position after the table
                 yPos = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 12;
             });
 
@@ -161,7 +216,6 @@ export default function AdminDashboardClient({
                 year: "numeric",
             });
 
-            // Add footer to every page
             const totalPages = doc.getNumberOfPages();
             for (let i = 1; i <= totalPages; i++) {
                 doc.setPage(i);
@@ -189,6 +243,20 @@ export default function AdminDashboardClient({
         }
     }
 
+    if (isLoading) {
+        return (
+            <main className="flex min-h-screen items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <svg className="h-8 w-8 animate-spin text-[#d4a843]" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    <p className="text-sm text-white/50">Loading election data...</p>
+                </div>
+            </main>
+        );
+    }
+
     return (
         <main className="min-h-screen p-4 sm:p-6 lg:p-8">
             {/* Header */}
@@ -199,6 +267,11 @@ export default function AdminDashboardClient({
                     </h1>
                     <p className="mt-1.5 text-sm text-white/40">
                         Live results for the Accounting Department election
+                        {lastUpdated && (
+                            <span className="ml-2 text-white/25">
+                                · Updated {lastUpdated.toLocaleTimeString()}
+                            </span>
+                        )}
                     </p>
                 </div>
 
@@ -271,11 +344,9 @@ export default function AdminDashboardClient({
             {/* Data integrity check */}
             {(() => {
                 const totalVotesInSystem = results.reduce((sum, pos) => sum + pos.totalVotes, 0);
-                const expectedIfAllVotedEvery = votedCount * results.length;
-                // Check: are there more voters marked as voted than actual vote records?
                 const maxVotesForAnyPosition = Math.max(...results.map(p => p.totalVotes), 0);
                 const hasDiscrepancy = votedCount > 0 && maxVotesForAnyPosition > 0 && 
-                    maxVotesForAnyPosition < Math.round(votedCount * 0.5); // Flag if biggest position has < 50% of voters
+                    maxVotesForAnyPosition < Math.round(votedCount * 0.5);
 
                 if (hasDiscrepancy) {
                     return (
