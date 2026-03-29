@@ -268,6 +268,34 @@ export default function AdminDashboardClient({
                 </div>
             </div>
 
+            {/* Data integrity check */}
+            {(() => {
+                const totalVotesInSystem = results.reduce((sum, pos) => sum + pos.totalVotes, 0);
+                const expectedIfAllVotedEvery = votedCount * results.length;
+                // Check: are there more voters marked as voted than actual vote records?
+                const maxVotesForAnyPosition = Math.max(...results.map(p => p.totalVotes), 0);
+                const hasDiscrepancy = votedCount > 0 && maxVotesForAnyPosition > 0 && 
+                    maxVotesForAnyPosition < Math.round(votedCount * 0.5); // Flag if biggest position has < 50% of voters
+
+                if (hasDiscrepancy) {
+                    return (
+                        <div className="mb-6 flex items-start gap-2.5 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-300/80">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mt-0.5 h-4 w-4 shrink-0">
+                                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                                <line x1="12" x2="12" y1="9" y2="13" />
+                                <line x1="12" x2="12.01" y1="17" y2="17" />
+                            </svg>
+                            <div>
+                                <span className="font-semibold text-red-300">Data Discrepancy Detected: </span>
+                                {votedCount} voters marked as voted, but the highest position only has {maxVotesForAnyPosition} votes.
+                                Total vote records across all positions: {totalVotesInSystem}.
+                            </div>
+                        </div>
+                    );
+                }
+                return null;
+            })()}
+
             {/* Election status indicator */}
             {!isElectionEnded && (
                 <div className="mb-6 flex items-center gap-2 rounded-xl border border-amber-500/10 bg-amber-500/5 px-4 py-2.5 text-sm text-amber-300/70">

@@ -39,22 +39,7 @@ export async function submitVotes(
 
     const supabase = await createClient();
 
-    // Verify voter hasn't already voted
-    const { data: voter } = await supabase
-        .from("voters")
-        .select("has_voted")
-        .eq("matric_number", matricNumber)
-        .single();
-
-    if (!voter) {
-        redirect("/login");
-    }
-
-    if (voter.has_voted) {
-        return { error: "You have already voted." };
-    }
-
-    // Get all positions to validate
+    // Get all positions to validate form data
     const { data: positions } = await supabase
         .from("positions")
         .select("id")
@@ -65,41 +50,41 @@ export async function submitVotes(
     }
 
     // Collect votes from form data (positions are optional)
-    const votesToInsert: { voter_matric: string; position_id: string; candidate_id: string }[] = [];
+    const votesToSubmit: { position_id: string; candidate_id: string }[] = [];
 
     for (const position of positions) {
         const candidateId = formData.get(`position_${position.id}`)?.toString();
         if (candidateId) {
-            votesToInsert.push({
-                voter_matric: matricNumber,
+            votesToSubmit.push({
                 position_id: position.id,
                 candidate_id: candidateId,
             });
         }
     }
 
-    if (votesToInsert.length === 0) {
+    if (votesToSubmit.length === 0) {
         return { error: "Please select at least one candidate before submitting." };
     }
 
-    // Insert all votes
-    const { error: voteError } = await supabase
-        .from("votes")
-        .insert(votesToInsert);
+    // Atomic transaction via RPC — all-or-nothing
+    const { data, error } = await supabase.rpc("submit_votes_atomic", {
+        p_voter_matric: matricNumber,
+        p_votes: votesToSubmit,
+    });
 
-    if (voteError) {
-        console.log("Vote insert error:", voteError);
-        if (voteError.code === "23505") {
+    if (error) {
+        console.error("Vote RPC error:", error);
+        if (error.message?.includes("already voted")) {
             return { error: "You have already voted." };
         }
-        return { error: `Failed to submit votes. (${voteError.message})` };
+        return { error: `Failed to submit votes. (${error.message})` };
     }
 
-    // Mark voter as has_voted
-    await supabase
-        .from("voters")
-        .update({ has_voted: true, voted_at: new Date().toISOString() })
-        .eq("matric_number", matricNumber);
+    // Check the RPC response
+    const result = data as { success: boolean; error?: string };
+    if (!result.success) {
+        return { error: result.error || "Failed to submit votes." };
+    }
 
     redirect("/vote/success");
 }
