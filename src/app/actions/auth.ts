@@ -23,16 +23,41 @@ export async function loginWithMatric(
         return { error: "Please enter your matric number." };
     }
 
+    // Normalize: trim, collapse spaces, uppercase
+    const normalizedMatric = matricNumber.replace(/\s+/g, " ").trim().toUpperCase();
+
     const supabase = await createClient();
 
-    // Look up the voter by matric number
-    const { data: voter, error } = await supabase
+    // Try exact match first
+    let { data: voter, error } = await supabase
         .from("voters")
         .select("*")
-        .eq("matric_number", matricNumber)
+        .eq("matric_number", normalizedMatric)
         .maybeSingle();
 
-    console.log("Supabase query result:", { voter, error, matricNumber });
+    // If no exact match, try case-insensitive search
+    if (!voter && !error) {
+        const { data: fuzzyVoter, error: fuzzyError } = await supabase
+            .from("voters")
+            .select("*")
+            .ilike("matric_number", normalizedMatric)
+            .maybeSingle();
+        voter = fuzzyVoter;
+        error = fuzzyError;
+    }
+
+    // Also try without leading/trailing spaces in the DB value
+    if (!voter && !error) {
+        const { data: trimVoter, error: trimError } = await supabase
+            .from("voters")
+            .select("*")
+            .ilike("matric_number", `%${normalizedMatric}%`)
+            .maybeSingle();
+        voter = trimVoter;
+        error = trimError;
+    }
+
+    console.log("Supabase query result:", { voter, error, matricNumber: normalizedMatric });
 
     if (error) {
         return { error: `Database error: ${error.message}` };

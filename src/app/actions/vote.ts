@@ -17,7 +17,7 @@ const SUBMISSION_GRACE_MS = 60 * 60 * 1000;
 const SUBMISSION_HARD_DEADLINE = new Date(ELECTION_DEADLINE.getTime() + SUBMISSION_GRACE_MS);
 
 // Used by page.tsx to block NEW visitors after 4pm
-export function isElectionClosed(): boolean {
+export async function isElectionClosed(): Promise<boolean> {
     return new Date() >= ELECTION_DEADLINE;
 }
 
