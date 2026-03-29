@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { createClient } from "@/lib/supabase/client";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -39,68 +38,24 @@ export default function AdminDashboardClient({
     const isElectionEnded = electionStatus === "Ended";
 
     const fetchData = useCallback(async () => {
-        const supabase = createClient();
+        try {
+            const res = await fetch("/api/election-results", {
+                cache: "no-store",
+                headers: { "Cache-Control": "no-cache" },
+            });
+            if (!res.ok) throw new Error("Failed to fetch");
+            const data = await res.json();
 
-        // Fetch positions with candidates
-        const { data: positions } = await supabase
-            .from("positions")
-            .select(`
-                id,
-                name,
-                display_order,
-                candidates (
-                    id,
-                    name,
-                    image_url
-                )
-            `)
-            .order("display_order");
-
-        // Fetch all votes
-        const { data: votes } = await supabase.from("votes").select("position_id, candidate_id");
-
-        // Fetch voter stats
-        const { count: totalVotersCount } = await supabase
-            .from("voters")
-            .select("*", { count: "exact", head: true });
-
-        const { count: votedCountResult } = await supabase
-            .from("voters")
-            .select("*", { count: "exact", head: true })
-            .eq("has_voted", true);
-
-        // Fetch election status
-        const { data: settingsRow } = await supabase
-            .from("election_settings")
-            .select("status")
-            .limit(1)
-            .single();
-
-        // Build results
-        const builtResults: PositionResult[] = (positions || []).map((position) => {
-            const positionVotes = (votes || []).filter((v) => v.position_id === position.id);
-            const candidateResults: CandidateResult[] = (position.candidates as { id: string; name: string; image_url: string | null }[]).map((candidate) => ({
-                ...candidate,
-                vote_count: positionVotes.filter((v) => v.candidate_id === candidate.id).length,
-            }));
-            candidateResults.sort((a, b) => b.vote_count - a.vote_count);
-            return {
-                ...position,
-                candidates: candidateResults,
-                totalVotes: positionVotes.length,
-            };
-        });
-
-        const tv = totalVotersCount || 0;
-        const vc = votedCountResult || 0;
-
-        setResults(builtResults);
-        setTotalVoters(tv);
-        setVotedCount(vc);
-        setParticipation(tv ? Math.round((vc / tv) * 100) : 0);
-        setElectionStatus(settingsRow?.status || "Ongoing");
-        setLastUpdated(new Date());
-        setIsLoading(false);
+            setResults(data.results);
+            setTotalVoters(data.totalVoters);
+            setVotedCount(data.votedCount);
+            setParticipation(data.participation);
+            setElectionStatus(data.electionStatus);
+            setLastUpdated(new Date());
+            setIsLoading(false);
+        } catch (err) {
+            console.error("Failed to fetch election results:", err);
+        }
     }, []);
 
     // Fetch on mount + auto-refresh every 10 seconds
