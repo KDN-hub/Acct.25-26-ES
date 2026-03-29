@@ -2,6 +2,10 @@ import { createClient } from "@/lib/supabase/server";
 import { logoutAdmin } from "@/app/actions/admin-auth";
 import AdminDashboardClient from "./admin-dashboard-client";
 
+// Always fetch fresh data, never cache
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 interface CandidateResult {
     id: string;
     name: string;

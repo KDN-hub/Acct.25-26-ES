@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -38,6 +39,15 @@ export default function AdminDashboardClient({
 }: AdminDashboardClientProps) {
     const [isGenerating, setIsGenerating] = useState(false);
     const isElectionEnded = electionStatus === "Ended";
+    const router = useRouter();
+
+    // Auto-refresh every 15 seconds for live vote counts
+    useEffect(() => {
+        const interval = setInterval(() => {
+            router.refresh();
+        }, 15000);
+        return () => clearInterval(interval);
+    }, [router]);
 
     function generatePDF() {
         setIsGenerating(true);
