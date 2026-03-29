@@ -46,17 +46,6 @@ export async function loginWithMatric(
         error = fuzzyError;
     }
 
-    // Also try without leading/trailing spaces in the DB value
-    if (!voter && !error) {
-        const { data: trimVoter, error: trimError } = await supabase
-            .from("voters")
-            .select("*")
-            .ilike("matric_number", `%${normalizedMatric}%`)
-            .maybeSingle();
-        voter = trimVoter;
-        error = trimError;
-    }
-
     console.log("Supabase query result:", { voter, error, matricNumber: normalizedMatric });
 
     if (error) {
