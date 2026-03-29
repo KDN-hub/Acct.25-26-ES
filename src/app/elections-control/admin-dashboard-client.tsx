@@ -93,7 +93,7 @@ export default function AdminDashboardClient({
             doc.setFontSize(11);
             doc.setFont("helvetica", "bold");
             doc.setTextColor(15, 31, 61);
-            doc.text("Total Eligible Voters: 531", 20, yPos + 2);
+            doc.text(`Total Eligible Voters: ${totalVoters}`, 20, yPos + 2);
 
             doc.text(
                 `Actual Turnout: ${votedCount} of ${totalVoters} (${participation}%)`,
